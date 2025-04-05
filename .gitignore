@@ -1,0 +1,7 @@
+# Python/PyCharm files
+__pycache__
+venv
+*.pyc
+
+# Music folder
+music

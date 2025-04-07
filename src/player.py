@@ -84,8 +84,17 @@ class PlaylistController:
             "title": self.song_list[self.idx],
             "bitrate": stream_info.get("bitrate", "--"),
             "rate": stream_info.get("sample_rate", "--"),
-            "channels": stream_info.get("channels", "--")
+            "channels": stream_info.get("channels", "--"),
+            "duration": stream_info["duration"] if stream_info.get("duration") else 0.0
         }
+
+    def get_current_pos(self) -> float | None:
+        pos = pygame.mixer.music.get_pos()
+        return pos / 1000 if pos != -1 else None
+
+    def seek(self, seconds: float) -> None:
+        print(f"Seeking to {seconds} sec...")
+        pygame.mixer.music.play(start=seconds)
 
     def set_volume(self, value: float) -> None:
         pygame.mixer.music.set_volume(value)

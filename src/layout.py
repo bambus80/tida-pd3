@@ -21,7 +21,8 @@ class MusicApp(QWidget):
 
     def top_left_display(self) -> QLabel:
         label = QLabel()
-        pixmap = QPixmap("src/assets/album.png")  # TODO: Display album cover
+        # label.setStyleSheet("border: 1px solid #ccc")
+        pixmap = QPixmap("src/assets/blank.png")  # TODO: Display album cover
         pixmap = pixmap.scaledToWidth(128)
         pixmap = pixmap.scaledToHeight(128)
         label.setPixmap(pixmap)
@@ -33,8 +34,8 @@ class MusicApp(QWidget):
         # TODO: Implement nice icons for transport buttons
         layout = QHBoxLayout()
         go_back_button = QPushButton(self)
-        go_back_button.setText("->")
-        # go_back_button.clicked.connect(do(self.playlist_ctl.next))
+        go_back_button.setText("<-")
+        go_back_button.clicked.connect(do(self.playlist_ctl.back))
         layout.addWidget(go_back_button)
         play_button = QPushButton(self)
         play_button.setText(">")
@@ -71,7 +72,8 @@ class MusicApp(QWidget):
         volume_slider_layout.addWidget(QLabel("<b>Volume:</b>"))
         volume_slider = QSlider()
         volume_slider.setOrientation(1)  # 1 means horizontal
-        volume_slider.valueChanged.connect(lambda: ...)
+        volume_slider.setValue(1)        # 100%
+        volume_slider.valueChanged.connect(self.playlist_ctl.set_volume)
         volume_slider_layout.addWidget(volume_slider)
         layout.addLayout(volume_slider_layout, 2, 1)
 
@@ -79,6 +81,7 @@ class MusicApp(QWidget):
             <font color=\"black\"><b>Shuffle</b></font>
             <font color=\"black\"><b>Repeat</b></font>
         """)
+        self.playlist_status_label.setStyleSheet("border: 1px solid #ccc")
         layout.addWidget(self.playlist_status_label, 3, 0)
         return layout
 
@@ -94,7 +97,15 @@ class MusicApp(QWidget):
                 """)
 
     def left_buttons(self) -> QLayout:
+        def do(x): return lambda: (x(), self.update_song_info())  # Update on-screen info after performing X
+
         layout = QHBoxLayout()
-        layout.addWidget(QPushButton("Shuffle"))
-        layout.addWidget(QPushButton("Repeat"))
+        shuffle_button = QPushButton(self)
+        shuffle_button.setText("Shuffle")
+        shuffle_button.clicked.connect(do(self.playlist_ctl.toggle_shuffle))
+        layout.addWidget(shuffle_button)
+        repeat_button = QPushButton(self)
+        repeat_button.setText("Repeat")
+        repeat_button.clicked.connect(do(self.playlist_ctl.toggle_repeat))
+        layout.addWidget(repeat_button)
         return layout

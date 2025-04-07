@@ -69,6 +69,15 @@ class PlaylistController:
         self._open(self.idx)
         self.play()
 
+    def back(self) -> None:
+        print("Previous song")
+        pygame.mixer.music.stop()
+        if self.idx == 0:
+            self.idx = len(self.song_list)
+        self.idx -= 1
+        self._open(self.idx)
+        self.play()
+
     def get_stream_info(self) -> dict:
         stream_info = self.metadata.streaminfo
         return {
@@ -78,5 +87,21 @@ class PlaylistController:
             "channels": stream_info.get("channels", "--")
         }
 
-    def set_volume(self, volume: float) -> None:
-        pygame.mixer.music.set_volume(volume)
+    def set_volume(self, value: float) -> None:
+        pygame.mixer.music.set_volume(value)
+
+    def toggle_shuffle(self) -> None:
+        if self.mode == "shuffle":
+            self.mode = None
+            print("Disabled shuffle")
+        else:
+            self.mode = "shuffle"
+            print("Enabled shuffle")
+
+    def toggle_repeat(self) -> None:
+        if self.mode == "repeat":
+            self.mode = None
+            print("Disabled repeat")
+        else:
+            self.mode = "repeat"
+            print("Enabled repeat")

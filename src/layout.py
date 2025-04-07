@@ -21,7 +21,6 @@ class MusicApp(QWidget):
 
     def top_left_display(self) -> QLabel:
         label = QLabel()
-        # label.setStyleSheet("border: 1px solid #ccc")
         pixmap = QPixmap("src/assets/blank.png")  # TODO: Display album cover
         pixmap = pixmap.scaledToWidth(128)
         pixmap = pixmap.scaledToHeight(128)
@@ -31,26 +30,25 @@ class MusicApp(QWidget):
     def transport_buttons(self) -> QLayout:
         def do(x): return lambda: (x(), self.update_song_info())  # Update on-screen info after performing X
 
-        # TODO: Implement nice icons for transport buttons
         layout = QHBoxLayout()
         go_back_button = QPushButton(self)
-        go_back_button.setText("<-")
+        go_back_button.setIcon(QIcon("src/assets/icon_back.png"))
         go_back_button.clicked.connect(do(self.playlist_ctl.back))
         layout.addWidget(go_back_button)
         play_button = QPushButton(self)
-        play_button.setText(">")
+        play_button.setIcon(QIcon("src/assets/icon_play.png"))
         play_button.clicked.connect(do(self.playlist_ctl.play))
         layout.addWidget(play_button)
         pause_button = QPushButton(self)
-        pause_button.setText("||")
+        pause_button.setIcon(QIcon("src/assets/icon_pause.png"))
         pause_button.clicked.connect(do(self.playlist_ctl.pause))
         layout.addWidget(pause_button)
         stop_button = QPushButton(self)
-        stop_button.setText("[]")
+        stop_button.setIcon(QIcon("src/assets/icon_stop.png"))
         stop_button.clicked.connect(do(self.playlist_ctl.stop))
         layout.addWidget(stop_button)
         go_forward_button = QPushButton(self)
-        go_forward_button.setText("->")
+        go_forward_button.setIcon(QIcon("src/assets/icon_next.png"))
         go_forward_button.clicked.connect(do(self.playlist_ctl.next))
         layout.addWidget(go_forward_button)
         return layout
@@ -101,11 +99,11 @@ class MusicApp(QWidget):
 
         layout = QHBoxLayout()
         shuffle_button = QPushButton(self)
-        shuffle_button.setText("Shuffle")
+        shuffle_button.setIcon(QIcon("src/assets/icon_shuffle.png"))
         shuffle_button.clicked.connect(do(self.playlist_ctl.toggle_shuffle))
         layout.addWidget(shuffle_button)
         repeat_button = QPushButton(self)
-        repeat_button.setText("Repeat")
+        repeat_button.setIcon(QIcon("src/assets/icon_repeat.png"))
         repeat_button.clicked.connect(do(self.playlist_ctl.toggle_repeat))
         layout.addWidget(repeat_button)
         return layout

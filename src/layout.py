@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from src.player import *
@@ -21,6 +21,9 @@ class MusicApp(QWidget):
     def main_layout(self) -> QLayout:
         layout = QVBoxLayout()
         grid = QGridLayout()
+        self.song_title_label = QLabel("<b>Press Play button to start</b>")
+        self.song_title_label.setStyleSheet("font: 16pt")
+        layout.addWidget(self.song_title_label)
         grid.addWidget(self.top_left_display(), 0, 0)
         grid.addLayout(self.transport_buttons(), 1, 0)
         grid.addLayout(self.song_info(), 0, 1)
@@ -30,12 +33,11 @@ class MusicApp(QWidget):
         return layout
 
     def top_left_display(self) -> QLabel:
-        label = QLabel()
-        pixmap = QPixmap("src/assets/blank.png")  # TODO: Display album cover
-        pixmap = pixmap.scaledToWidth(128)
-        pixmap = pixmap.scaledToHeight(128)
-        label.setPixmap(pixmap)
-        return label
+        self.album_label = QLabel()
+        self.album_pixmap = QPixmap("src/assets/blank.png")
+        self.album_pixmap = self.album_pixmap.scaled(128, 128, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self.album_label.setPixmap(self.album_pixmap)
+        return self.album_label
 
     def transport_buttons(self) -> QLayout:
         def do(x): return lambda: (x(), self.update_song_info())  # Update on-screen info after performing X
@@ -66,19 +68,15 @@ class MusicApp(QWidget):
     def song_info(self) -> QLayout:
         layout = QVBoxLayout()
         grid = QGridLayout()
-        self.song_title_label = QLabel("<b>Press Play button to start</b>")
-        self.song_title_label.setStyleSheet("font: 16pt")
-        grid.addWidget(self.song_title_label, 0, 0)
         self.bitrate_label = QLabel("<b>Bitrate:</b> --")
-        grid.addWidget(self.bitrate_label, 1, 0)
+        grid.addWidget(self.bitrate_label, 0, 0)
         self.sampling_rate_label = QLabel("<b>Sampling rate:</b> --")
-        grid.addWidget(self.sampling_rate_label, 1, 1)
+        grid.addWidget(self.sampling_rate_label, 0, 1)
         self.duration_label = QLabel("<b>Stopped</b> --:--/--:--")
-        grid.addWidget(self.duration_label, 2, 0)
+        grid.addWidget(self.duration_label, 1, 0)
         self.channel_label = QLabel("<b>-- Channels</b>")
-        grid.addWidget(self.channel_label, 2, 1)
+        grid.addWidget(self.channel_label, 1, 1)
 
-        # TODO: Implement volume slider
         volume_slider_layout = QHBoxLayout()
         volume_slider_layout.addWidget(QLabel("<b>Volume:</b>"))
         volume_slider = QSlider()
@@ -99,30 +97,43 @@ class MusicApp(QWidget):
         layout.addWidget(self.playlist_status_label)
         return layout
 
+    def new_album_cover(self, cover: QPixmap = None) -> None:
+        if cover:
+            self.album_pixmap = cover
+        else:
+            self.album_pixmap = QPixmap("src/assets/blank.png")
+        self.album_pixmap = self.album_pixmap.scaled(128, 128, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self.album_label.setPixmap(self.album_pixmap)
+
+
     def update_song_info(self) -> None:
         if self.playlist_ctl.is_playing:
             metadata = self.playlist_ctl.get_stream_info()
-            self.song_title_label.setText(f"<b>{metadata['title']}</b>")
+            self.song_title_label.setText(f"<b>{truncate(metadata['title'], 40)}</b>")
             self.bitrate_label.setText(f"<b>Bitrate:</b> {str(metadata['bitrate'] / 1000) + 'kbps'}")
             self.sampling_rate_label.setText(f"<b>Sampling rate:</b> {str(metadata['rate'] / 1000) + 'kHz'}")
             self.duration_label.setText(
                 f"<b>{'Playing' if self.playlist_ctl.is_playing else 'Paused'}</b> --:--/{secs_to_mmss(metadata['duration'])}")
             self.channel_label.setText(f"<b>{metadata['channels']} Channels</b>")
+        self.new_album_cover(self.playlist_ctl.get_album_cover())
         self.playlist_status_label.setText(f"""
                     <font color=\"{"red" if self.playlist_ctl.mode == "shuffle" else "black"}\"><b>Shuffle</b></font>
                     <font color=\"{"red" if self.playlist_ctl.mode == "repeat" else "black"}\"><b>Repeat</b></font>
                 """)
 
     def reset_song_info(self) -> None:
+        self.song_duration_slider.setValue(0)
         self.song_title_label.setText("<b>Press Play button to start</b>")
         self.bitrate_label.setText("<b>Bitrate:</b> --")
         self.sampling_rate_label.setText("<b>Sampling rate:</b> --")
         self.duration_label.setText("<b>Stopped</b> --:--/--:--")
         self.channel_label.setText("<b>-- Channels</b>")
+        self.new_album_cover()
         self.playlist_status_label.setText(f"""
                             <font color=\"{"red" if self.playlist_ctl.mode == "shuffle" else "black"}\"><b>Shuffle</b></font>
                             <font color=\"{"red" if self.playlist_ctl.mode == "repeat" else "black"}\"><b>Repeat</b></font>
                         """)
+
 
     def left_buttons(self) -> QLayout:
         def do(x): return lambda: (x(), self.update_song_info())  # Update on-screen info after performing X
@@ -148,12 +159,15 @@ class MusicApp(QWidget):
         return layout
 
     def update_seek_position(self):
+        self.playlist_ctl.update()
         if self.playlist_ctl.is_playing and self.playlist_ctl.get_current_pos() is not None:
             pos = self.playlist_ctl.get_current_pos()
             duration = self.playlist_ctl.get_stream_info()['duration']
             if duration:
                 percent = int((pos / duration) * 100)
                 self.song_duration_slider.setValue(percent)
+        else:
+            self.song_duration_slider.setValue(0)
 
     def _song_seek(self):
         duration = self.playlist_ctl.get_stream_info()['duration']

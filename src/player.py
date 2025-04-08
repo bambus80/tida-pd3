@@ -2,6 +2,8 @@ import pygame
 import audio_metadata
 import os
 import random
+from PyQt5.QtGui import QPixmap
+from PyQt5.QtCore import QByteArray, QBuffer, QIODevice
 
 
 class PlaylistController:
@@ -17,6 +19,9 @@ class PlaylistController:
 
         pygame.mixer.init()
         self._open(self.idx)
+
+        self.SONG_END = pygame.USEREVENT + 1
+        pygame.mixer.music.set_endevent(self.SONG_END)
 
     def _open(self, idx: int) -> None:
         path = os.path.join(os.getcwd(), self.path, self.song_list[idx])
@@ -34,6 +39,7 @@ class PlaylistController:
     def play(self) -> None:
         if not self.is_playing:
             print("Playing song")
+            self._open(self.idx)
             pygame.mixer.music.play()
         else:
             print("Resuming song")
@@ -43,7 +49,6 @@ class PlaylistController:
     def pause(self) -> None:
         print("Pausing song")
         pygame.mixer.music.pause()
-        self.is_playing = False
 
     def stop(self) -> None:
         if not pygame.mixer.music.get_busy():
@@ -51,18 +56,19 @@ class PlaylistController:
         else:
             print("Stopping song")
             pygame.mixer.music.stop()
+        self.is_playing = False
         self.idx = 0
 
     def next(self) -> None:
         print("Next song")
-        pygame.mixer.music.stop()
+        self.stop()
         match self.mode:
             case "repeat":
                 self.idx = 0 if self.idx == len(self.song_list) - 1 else self.idx + 1
             case "shuffle":
                 self.idx = random.randrange(0, len(self.song_list))
             case _:
-                if self.idx == len(self.song_list) - 1:
+                if self.idx == len(self.song_list):
                     self.stop()
                     return
                 self.idx += 1
@@ -72,11 +78,15 @@ class PlaylistController:
     def back(self) -> None:
         print("Previous song")
         pygame.mixer.music.stop()
+        self.is_playing = False
         if self.idx == 0:
             self.idx = len(self.song_list)
         self.idx -= 1
-        self._open(self.idx)
         self.play()
+
+    def update(self):
+        if self.is_playing and not pygame.mixer.music.get_busy():
+            self.next()
 
     def get_stream_info(self) -> dict:
         stream_info = self.metadata.streaminfo
@@ -91,6 +101,19 @@ class PlaylistController:
     def get_current_pos(self) -> float | None:
         pos = pygame.mixer.music.get_pos()
         return pos / 1000 if pos != -1 else None
+
+    def get_album_cover(self) -> QPixmap | None:
+        if not self.metadata.pictures:
+            return None
+        print("Loading album cover")
+        picture = self.metadata.pictures[0]
+        # Convert Picture object to QPixmap
+        byte_array = QByteArray(picture.data)
+        buffer = QBuffer(byte_array)
+        buffer.open(QIODevice.ReadOnly)
+        pixmap = QPixmap()
+        pixmap.loadFromData(byte_array, picture.mime_type.split("/")[-1].upper())
+        return pixmap
 
     def seek(self, seconds: float) -> None:
         print(f"Seeking to {seconds} sec...")

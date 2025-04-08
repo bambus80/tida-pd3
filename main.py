@@ -3,15 +3,16 @@ from src.player import *
 from PyQt5.QtWidgets import QMessageBox
 import sys
 
-MUSIC_FOLDER_PATH = "music"
 
 if __name__ == "__main__":
+    MUSIC_FOLDER_PATH = "music"
     app = QApplication(sys.argv)
-    print(f"Music folder: {os.path.join(os.getcwd(), MUSIC_FOLDER_PATH)}")
-    if not os.listdir(MUSIC_FOLDER_PATH):
+    path = os.path.join(os.getcwd(), sys.argv[1] if len(sys.argv) >= 2 else MUSIC_FOLDER_PATH)
+    print(f"Music folder: {path}")
+    if not os.listdir(path):
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Critical)
-        msg.setText(f"No files found at {os.path.join(os.getcwd(), MUSIC_FOLDER_PATH)}\nPlease make sure to include music in this directory.")
+        msg.setText(f"No files found at {path}\nPlease make sure to include music in this directory.")
         sys.exit(msg.exec_())
 
     playlist_ctl = PlaylistController(MUSIC_FOLDER_PATH)

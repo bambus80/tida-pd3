@@ -2,7 +2,7 @@ import math
 
 
 def secs_to_mmss(value: int) -> str:
-    return f"{math.floor(value / 60)}:{int(value % 60)}"
+    return f"{math.floor(value / 60)}:{int(value % 60):02}"
 
 
 def truncate(text: str, length: int) -> str:

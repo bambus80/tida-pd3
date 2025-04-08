@@ -113,7 +113,10 @@ class MusicApp(QWidget):
             self.bitrate_label.setText(f"<b>Bitrate:</b> {str(metadata['bitrate'] / 1000) + 'kbps'}")
             self.sampling_rate_label.setText(f"<b>Sampling rate:</b> {str(metadata['rate'] / 1000) + 'kHz'}")
             self.duration_label.setText(
-                f"<b>{'Playing' if self.playlist_ctl.is_playing else 'Paused'}</b> --:--/{secs_to_mmss(metadata['duration'])}")
+                f"""
+                <b>{'Playing' if self.playlist_ctl.is_playing else 'Paused'}</b> 
+                {secs_to_mmss(int((self.playlist_ctl.get_current_pos() / metadata['duration']) * 100))}/{secs_to_mmss(metadata['duration'])}
+                """)
             self.channel_label.setText(f"<b>{metadata['channels']} Channels</b>")
         self.new_album_cover(self.playlist_ctl.get_album_cover())
         self.playlist_status_label.setText(f"""
@@ -130,9 +133,9 @@ class MusicApp(QWidget):
         self.channel_label.setText("<b>-- Channels</b>")
         self.new_album_cover()
         self.playlist_status_label.setText(f"""
-                            <font color=\"{"red" if self.playlist_ctl.mode == "shuffle" else "black"}\"><b>Shuffle</b></font>
-                            <font color=\"{"red" if self.playlist_ctl.mode == "repeat" else "black"}\"><b>Repeat</b></font>
-                        """)
+                    <font color=\"{"red" if self.playlist_ctl.mode == "shuffle" else "black"}\"><b>Shuffle</b></font>
+                    <font color=\"{"red" if self.playlist_ctl.mode == "repeat" else "black"}\"><b>Repeat</b></font>
+                """)
 
 
     def left_buttons(self) -> QLayout:

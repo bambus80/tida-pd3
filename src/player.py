@@ -103,7 +103,7 @@ class PlaylistController:
         return pos / 1000 if pos != -1 else None
 
     def get_album_cover(self) -> QPixmap | None:
-        if not self.metadata.pictures:
+        if not self.metadata.pictures or not self.is_playing:
             return None
         print("Loading album cover")
         picture = self.metadata.pictures[0]

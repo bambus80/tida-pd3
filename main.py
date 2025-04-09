@@ -11,6 +11,7 @@ if __name__ == "__main__":
     print(f"Music folder: {path}")
     if not os.listdir(path):
         msg = QMessageBox()
+        msg.setWindowTitle("Super cool music player")
         msg.setIcon(QMessageBox.Critical)
         msg.setText(f"No files found at {path}\nPlease make sure to include music in this directory.")
         sys.exit(msg.exec_())

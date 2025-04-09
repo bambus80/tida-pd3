@@ -13,6 +13,7 @@ class MusicApp(QWidget):
         self.timer.timeout.connect(self.update_seek_position)
         self.timer.start()
 
+        self.setWindowTitle("Super cool music player")
         self.setGeometry(100, 100, 550, 200)
         self.playlist_ctl: PlaylistController = playlist_ctl
         self.setLayout(self.main_layout())

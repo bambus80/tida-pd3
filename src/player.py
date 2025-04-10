@@ -67,7 +67,7 @@ class PlaylistController:
         self.stop()
         match self.mode:
             case "repeat":
-                self.idx = 0 if self.idx == len(self.song_list) - 1 else self.idx + 1
+                ...
             case "shuffle":
                 self.idx = random.randrange(0, len(self.song_list))
             case _:
@@ -99,7 +99,8 @@ class PlaylistController:
             "bitrate": stream_info.get("bitrate", "--"),
             "rate": stream_info.get("sample_rate", "--"),
             "channels": stream_info.get("channels", "--"),
-            "duration": stream_info["duration"] if stream_info.get("duration") else 0.0
+            "duration": stream_info["duration"] if stream_info.get("duration") else 0.0,
+            "offset": self.offset
         }
 
     def get_current_pos(self) -> float | None:

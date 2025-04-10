@@ -3,7 +3,6 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from src.player import *
 from src.util import *
-from time import sleep
 
 
 class MusicApp(QWidget):
@@ -120,9 +119,9 @@ class MusicApp(QWidget):
             self.duration_label.setText(
                 f"""
                 <b>{'Playing' if self.playlist_ctl.is_playing else 'Paused'}</b> 
-                {secs_to_mmss(int((self.playlist_ctl.get_current_pos() / metadata['duration']) * 100))}/{secs_to_mmss(metadata['duration'])}
-                """)  # TODO: why is the duration label slower wtf
-            self.channel_label.setText(f"<b>{metadata['channels']} Channels</b>")
+                {secs_to_mmss(metadata['offset'])}/{secs_to_mmss(metadata['duration'])}
+                """)
+            self.channel_label.setText(f"<b>{metadata['channels']} channel(s)</b>")
         if not self.old_idx == self.playlist_ctl.idx:
             self.new_album_cover(self.playlist_ctl.get_album_cover())
         self.playlist_status_label.setText(f"""
@@ -137,7 +136,7 @@ class MusicApp(QWidget):
         self.bitrate_label.setText("<b>Bitrate:</b> --")
         self.sampling_rate_label.setText("<b>Sampling rate:</b> --")
         self.duration_label.setText("<b>Stopped</b> --:--/--:--")
-        self.channel_label.setText("<b>-- Channels</b>")
+        self.channel_label.setText("<b>-- channel(s)</b>")
         self.new_album_cover()
         self.playlist_status_label.setText(f"""
                     <font color=\"{"red" if self.playlist_ctl.mode == "shuffle" else "black"}\"><b>Shuffle</b></font>
@@ -149,14 +148,14 @@ class MusicApp(QWidget):
         def do(x): return lambda: (x(), self.update_song_info())  # Update on-screen info after performing X
 
         layout = QHBoxLayout()
-        shuffle_button = QPushButton(self)
-        shuffle_button.setIcon(QIcon("src/assets/icon_shuffle.png"))
-        shuffle_button.clicked.connect(do(self.playlist_ctl.toggle_shuffle))
-        layout.addWidget(shuffle_button)
-        repeat_button = QPushButton(self)
-        repeat_button.setIcon(QIcon("src/assets/icon_repeat.png"))
-        repeat_button.clicked.connect(do(self.playlist_ctl.toggle_repeat))
-        layout.addWidget(repeat_button)
+        self.shuffle_button = QPushButton(self)
+        self.shuffle_button.setIcon(QIcon("src/assets/icon_shuffle.png"))
+        self.shuffle_button.clicked.connect(do(self.playlist_ctl.toggle_shuffle))
+        layout.addWidget(self.shuffle_button)
+        self.repeat_button = QPushButton(self)
+        self.repeat_button.setIcon(QIcon("src/assets/icon_repeat.png"))
+        self.repeat_button.clicked.connect(do(self.playlist_ctl.toggle_repeat))
+        layout.addWidget(self.repeat_button)
         return layout
 
     def song_duration_bar(self) -> QLayout:
@@ -164,7 +163,7 @@ class MusicApp(QWidget):
         self.song_duration_slider = QSlider()
         self.song_duration_slider.setOrientation(1)  # 1 means horizontal
         self.song_duration_slider.setRange(0, 1000)
-        self.song_duration_slider.valueChanged.connect(self._song_seek)
+        self.song_duration_slider.sliderReleased.connect(self._song_seek)
         layout.addWidget(self.song_duration_slider)
         return layout
 
@@ -181,19 +180,8 @@ class MusicApp(QWidget):
         else:
             self.song_duration_slider.setValue(0)
 
-    def _slider_dragged(self) -> None:
-        self.user_dragging_slider = True
-
     def _song_seek(self) -> None:
-        self.user_dragging_slider = False
         duration = self.playlist_ctl.get_stream_info()['duration']
         target = (self.song_duration_slider.value() / 1000) * duration
         self.playlist_ctl.seek(target)
         self.update_song_info()
-
-    def update(self) -> None:
-        while True:
-            if self.playlist_ctl.is_playing and not pygame.mixer.music.get_busy():
-                self.playlist_ctl.next()
-                self.update_song_info()
-            sleep(0.2)

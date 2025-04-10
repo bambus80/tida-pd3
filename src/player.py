@@ -14,6 +14,7 @@ class PlaylistController:
         print(f"Total songs: {len(self.song_list)} | {self.song_list}")
 
         self.metadata: audio_metadata.Format | None = None
+        self.offset: float = 0.0
         self.is_playing: bool = False
         self.mode: str | None = None
 
@@ -41,6 +42,7 @@ class PlaylistController:
             print("Playing song")
             self._open(self.idx)
             pygame.mixer.music.play()
+            self.offset = 0.0
         else:
             print("Resuming song")
             pygame.mixer.music.unpause()
@@ -57,6 +59,7 @@ class PlaylistController:
             print("Stopping song")
             pygame.mixer.music.stop()
         self.is_playing = False
+        self.offset = 0.0
         self.idx = 0
 
     def next(self) -> None:
@@ -78,6 +81,7 @@ class PlaylistController:
     def back(self) -> None:
         print("Previous song")
         pygame.mixer.music.stop()
+        self.offset = 0.0
         self.is_playing = False
         if self.idx == 0:
             self.idx = len(self.song_list)
@@ -100,7 +104,7 @@ class PlaylistController:
 
     def get_current_pos(self) -> float | None:
         pos = pygame.mixer.music.get_pos()
-        return pos / 1000 if pos != -1 else None
+        return pos / 1000 + self.offset if pos != -1 else None
 
     def get_album_cover(self) -> QPixmap | None:
         if not self.metadata.pictures or not self.is_playing:
@@ -117,6 +121,7 @@ class PlaylistController:
 
     def seek(self, seconds: float) -> None:
         print(f"Seeking to {seconds} sec...")
+        self.offset = seconds
         pygame.mixer.music.play(start=seconds)
 
     def set_volume(self, value: float) -> None:

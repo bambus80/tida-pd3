@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from src.player import *
 from src.util import *
+from time import sleep
 
 
 class MusicApp(QWidget):
@@ -15,7 +16,10 @@ class MusicApp(QWidget):
 
         self.setWindowTitle("Super cool music player")
         self.setGeometry(100, 100, 550, 200)
+        self.old_idx = 0
         self.playlist_ctl: PlaylistController = playlist_ctl
+
+        self.user_dragging_slider: bool = False
         self.setLayout(self.main_layout())
         self.show()
 
@@ -117,13 +121,15 @@ class MusicApp(QWidget):
                 f"""
                 <b>{'Playing' if self.playlist_ctl.is_playing else 'Paused'}</b> 
                 {secs_to_mmss(int((self.playlist_ctl.get_current_pos() / metadata['duration']) * 100))}/{secs_to_mmss(metadata['duration'])}
-                """)
+                """)  # TODO: why is the duration label slower wtf
             self.channel_label.setText(f"<b>{metadata['channels']} Channels</b>")
-        self.new_album_cover(self.playlist_ctl.get_album_cover())
+        if not self.old_idx == self.playlist_ctl.idx:
+            self.new_album_cover(self.playlist_ctl.get_album_cover())
         self.playlist_status_label.setText(f"""
                     <font color=\"{"red" if self.playlist_ctl.mode == "shuffle" else "black"}\"><b>Shuffle</b></font>
                     <font color=\"{"red" if self.playlist_ctl.mode == "repeat" else "black"}\"><b>Repeat</b></font>
                 """)
+        self.old_idx = self.playlist_ctl.idx
 
     def reset_song_info(self) -> None:
         self.song_duration_slider.setValue(0)
@@ -157,24 +163,37 @@ class MusicApp(QWidget):
         layout = QHBoxLayout()
         self.song_duration_slider = QSlider()
         self.song_duration_slider.setOrientation(1)  # 1 means horizontal
-        self.song_duration_slider.setRange(0, 100)
-        self.song_duration_slider.sliderReleased.connect(self._song_seek)
+        self.song_duration_slider.setRange(0, 1000)
+        self.song_duration_slider.valueChanged.connect(self._song_seek)
         layout.addWidget(self.song_duration_slider)
         return layout
 
-    def update_seek_position(self):
+    def update_seek_position(self) -> None:
         self.playlist_ctl.update()
+        if self.user_dragging_slider:
+            return
         if self.playlist_ctl.is_playing and self.playlist_ctl.get_current_pos() is not None:
             pos = self.playlist_ctl.get_current_pos()
             duration = self.playlist_ctl.get_stream_info()['duration']
             if duration:
-                percent = int((pos / duration) * 100)
+                percent = int((pos / duration) * 1000)
                 self.song_duration_slider.setValue(percent)
         else:
             self.song_duration_slider.setValue(0)
 
-    def _song_seek(self):
+    def _slider_dragged(self) -> None:
+        self.user_dragging_slider = True
+
+    def _song_seek(self) -> None:
+        self.user_dragging_slider = False
         duration = self.playlist_ctl.get_stream_info()['duration']
-        target = (self.song_duration_slider.value() / 100) * duration
+        target = (self.song_duration_slider.value() / 1000) * duration
         self.playlist_ctl.seek(target)
         self.update_song_info()
+
+    def update(self) -> None:
+        while True:
+            if self.playlist_ctl.is_playing and not pygame.mixer.music.get_busy():
+                self.playlist_ctl.next()
+                self.update_song_info()
+            sleep(0.2)

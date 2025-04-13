@@ -15,7 +15,7 @@ class PlaylistController:
 
         self.metadata: audio_metadata.Format | None = None
         self.offset: float = 0.0
-        self.is_playing: bool = False
+        self.state: str | None = None
         self.mode: str | None = None
 
         pygame.mixer.init()
@@ -28,17 +28,18 @@ class PlaylistController:
         path = os.path.join(os.getcwd(), self.path, self.song_list[idx])
         print(f"Opening {path}... ", end="")
         try:
-            if self.is_playing:
+            if self.state in ["playing", "paused"]:
                 pygame.mixer.music.stop()
             self.metadata = audio_metadata.load(path)
             pygame.mixer.music.load(path)
+            self.state = "opened"
         except Exception as e:
             print(f"FAILED! {e}")
             return
         print("OK")
 
     def play(self) -> None:
-        if not self.is_playing:
+        if self.state in ["stopped", "opened", "playing"]:
             print("Playing song")
             self._open(self.idx)
             pygame.mixer.music.play()
@@ -46,11 +47,12 @@ class PlaylistController:
         else:
             print("Resuming song")
             pygame.mixer.music.unpause()
-        self.is_playing = True
+        self.state = "playing"
 
     def pause(self) -> None:
         print("Pausing song")
         pygame.mixer.music.pause()
+        self.state = "paused"
 
     def stop(self) -> None:
         if not pygame.mixer.music.get_busy():
@@ -58,9 +60,8 @@ class PlaylistController:
         else:
             print("Stopping song")
             pygame.mixer.music.stop()
-        self.is_playing = False
+        self.state = "stopped"
         self.offset = 0.0
-        self.idx = 0
 
     def next(self) -> None:
         print("Next song")
@@ -71,10 +72,18 @@ class PlaylistController:
             case "shuffle":
                 self.idx = random.randrange(0, len(self.song_list))
             case _:
-                if self.idx == len(self.song_list):
+                if self.idx == len(self.song_list) - 1:
                     self.stop()
                     return
                 self.idx += 1
+        self._open(self.idx)
+        self.play()
+
+    def force_next(self) -> None:
+        if self.idx == len(self.song_list) - 1:
+            self.idx = 0
+        else:
+            self.idx += 1
         self._open(self.idx)
         self.play()
 
@@ -82,14 +91,13 @@ class PlaylistController:
         print("Previous song")
         pygame.mixer.music.stop()
         self.offset = 0.0
-        self.is_playing = False
         if self.idx == 0:
             self.idx = len(self.song_list)
         self.idx -= 1
         self.play()
 
     def update(self):
-        if self.is_playing and not pygame.mixer.music.get_busy():
+        if self.state == "playing" and not pygame.mixer.music.get_busy():
             self.next()
 
     def get_stream_info(self) -> dict:
@@ -108,7 +116,7 @@ class PlaylistController:
         return pos / 1000 + self.offset if pos != -1 else None
 
     def get_album_cover(self) -> QPixmap | None:
-        if not self.metadata.pictures or not self.is_playing:
+        if not self.metadata.pictures:
             return None
         print("Loading album cover")
         picture = self.metadata.pictures[0]

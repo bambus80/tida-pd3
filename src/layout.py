@@ -65,7 +65,7 @@ class MusicApp(QWidget):
         layout.addWidget(stop_button)
         go_forward_button = QPushButton(self)
         go_forward_button.setIcon(QIcon("src/assets/icon_next.png"))
-        go_forward_button.clicked.connect(do(self.playlist_ctl.next))
+        go_forward_button.clicked.connect(do(self.playlist_ctl.force_next))
         layout.addWidget(go_forward_button)
         return layout
 
@@ -109,16 +109,15 @@ class MusicApp(QWidget):
         self.album_pixmap = self.album_pixmap.scaled(128, 128, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         self.album_label.setPixmap(self.album_pixmap)
 
-
     def update_song_info(self) -> None:
-        if self.playlist_ctl.is_playing:
+        if self.playlist_ctl.state in ["playing", "paused", "opened"]:
             metadata = self.playlist_ctl.get_stream_info()
             self.song_title_label.setText(f"<b>{truncate(metadata['title'], 40)}</b>")
             self.bitrate_label.setText(f"<b>Bitrate:</b> {str(metadata['bitrate'] / 1000) + 'kbps'}")
             self.sampling_rate_label.setText(f"<b>Sampling rate:</b> {str(metadata['rate'] / 1000) + 'kHz'}")
             self.duration_label.setText(
                 f"""
-                <b>{'Playing' if self.playlist_ctl.is_playing else 'Paused'}</b> 
+                <b>{self.playlist_ctl.state.capitalize()}</b> 
                 {secs_to_mmss(metadata['offset'])}/{secs_to_mmss(metadata['duration'])}
                 """)
             self.channel_label.setText(f"<b>{metadata['channels']} channel(s)</b>")
@@ -143,7 +142,6 @@ class MusicApp(QWidget):
                     <font color=\"{"red" if self.playlist_ctl.mode == "repeat" else "black"}\"><b>Repeat</b></font>
                 """)
 
-
     def left_buttons(self) -> QLayout:
         def do(x): return lambda: (x(), self.update_song_info())  # Update on-screen info after performing X
 
@@ -163,7 +161,7 @@ class MusicApp(QWidget):
         self.song_duration_slider = QSlider()
         self.song_duration_slider.setOrientation(1)  # 1 means horizontal
         self.song_duration_slider.setRange(0, 1000)
-        self.song_duration_slider.sliderReleased.connect(self._song_seek)
+        # self.song_duration_slider.sliderReleased.connect(self._song_seek)
         layout.addWidget(self.song_duration_slider)
         return layout
 
@@ -171,7 +169,7 @@ class MusicApp(QWidget):
         self.playlist_ctl.update()
         if self.user_dragging_slider:
             return
-        if self.playlist_ctl.is_playing and self.playlist_ctl.get_current_pos() is not None:
+        if self.playlist_ctl.state == "playing" and self.playlist_ctl.get_current_pos() is not None:
             pos = self.playlist_ctl.get_current_pos()
             duration = self.playlist_ctl.get_stream_info()['duration']
             if duration:

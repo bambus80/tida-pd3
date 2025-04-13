@@ -3,11 +3,14 @@ import audio_metadata
 import os
 import random
 from PyQt5.QtGui import QPixmap
-from PyQt5.QtCore import QByteArray, QBuffer, QIODevice
+from PyQt5.QtCore import QByteArray, QBuffer, QIODevice, QObject, pyqtSignal
 
 
-class PlaylistController:
+class PlaylistController(QObject):
+    song_updated = pyqtSignal()
+
     def __init__(self, filepath: str) -> None:
+        super().__init__()
         self.idx: int = 0
         self.path: str = filepath
         self.song_list: list[str] = os.listdir(self.path)
@@ -99,6 +102,7 @@ class PlaylistController:
     def update(self):
         if self.state == "playing" and not pygame.mixer.music.get_busy():
             self.next()
+            self.song_updated.emit()
 
     def get_stream_info(self) -> dict:
         stream_info = self.metadata.streaminfo

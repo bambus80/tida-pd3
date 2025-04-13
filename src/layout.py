@@ -17,6 +17,7 @@ class MusicApp(QWidget):
         self.setGeometry(100, 100, 550, 200)
         self.old_idx = 0
         self.playlist_ctl: PlaylistController = playlist_ctl
+        self.playlist_ctl.song_updated.connect(self.update_song_info)
 
         self.user_dragging_slider: bool = False
         self.setLayout(self.main_layout())

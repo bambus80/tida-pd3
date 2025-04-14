@@ -119,8 +119,8 @@ class MusicApp(QWidget):
             self.duration_label.setText(
                 f"""
                 <b>{self.playlist_ctl.state.capitalize()}</b> 
-                {secs_to_mmss(metadata['offset'])}/{secs_to_mmss(metadata['duration'])}
-                """)
+                {secs_to_mmss(metadata['offset'] * 2)}/{secs_to_mmss(metadata['duration'])}
+                """)  # ???
             self.channel_label.setText(f"<b>{metadata['channels']} channel(s)</b>")
         if not self.old_idx == self.playlist_ctl.idx:
             self.new_album_cover(self.playlist_ctl.get_album_cover())

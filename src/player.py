@@ -1,4 +1,5 @@
 import pygame
+import time
 import audio_metadata
 import os
 import random
@@ -17,6 +18,7 @@ class PlaylistController(QObject):
         print(f"Total songs: {len(self.song_list)} | {self.song_list}")
 
         self.metadata: audio_metadata.Format | None = None
+        self.start_time: float = time.time()
         self.offset: float = 0.0
         self.state: str | None = None
         self.mode: str | None = None
@@ -46,7 +48,7 @@ class PlaylistController(QObject):
             print("Playing song")
             self._open(self.idx)
             pygame.mixer.music.play()
-            self.offset = 0.0
+            self.start_time = time.time()
         else:
             print("Resuming song")
             pygame.mixer.music.unpause()
@@ -100,8 +102,11 @@ class PlaylistController(QObject):
         self.play()
 
     def update(self):
-        if self.state == "playing" and not pygame.mixer.music.get_busy():
-            self.next()
+        if self.state == "playing":
+            if not pygame.mixer.music.get_busy():
+                self.next()
+                self.song_updated.emit()
+            self.offset = time.time() - self.start_time
             self.song_updated.emit()
 
     def get_stream_info(self) -> dict:
@@ -112,7 +117,7 @@ class PlaylistController(QObject):
             "rate": stream_info.get("sample_rate", "--"),
             "channels": stream_info.get("channels", "--"),
             "duration": stream_info["duration"] if stream_info.get("duration") else 0.0,
-            "offset": self.offset
+            "offset": self.offset / 2  # ???
         }
 
     def get_current_pos(self) -> float | None:

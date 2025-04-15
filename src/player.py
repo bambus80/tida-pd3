@@ -137,11 +137,6 @@ class PlaylistController(QObject):
         pixmap.loadFromData(byte_array, picture.mime_type.split("/")[-1].upper())
         return pixmap
 
-    def seek(self, seconds: float) -> None:
-        print(f"Seeking to {seconds} sec...")
-        self.offset = seconds
-        pygame.mixer.music.play(start=seconds)
-
     def set_volume(self, value: float) -> None:
         pygame.mixer.music.set_volume(value)
 

@@ -162,7 +162,6 @@ class MusicApp(QWidget):
         self.song_duration_slider = QSlider()
         self.song_duration_slider.setOrientation(1)  # 1 means horizontal
         self.song_duration_slider.setRange(0, 1000)
-        # self.song_duration_slider.sliderReleased.connect(self._song_seek)
         layout.addWidget(self.song_duration_slider)
         return layout
 
@@ -178,9 +177,3 @@ class MusicApp(QWidget):
                 self.song_duration_slider.setValue(percent)
         else:
             self.song_duration_slider.setValue(0)
-
-    def _song_seek(self) -> None:
-        duration = self.playlist_ctl.get_stream_info()['duration']
-        target = (self.song_duration_slider.value() / 1000) * duration
-        self.playlist_ctl.seek(target)
-        self.update_song_info()

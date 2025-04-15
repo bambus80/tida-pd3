@@ -26,13 +26,16 @@ class MusicApp(QWidget):
     def main_layout(self) -> QLayout:
         layout = QVBoxLayout()
         grid = QGridLayout()
+        self.duration_label = QLabel("<b>Stopped</b> --:--/--:--")
+        self.duration_label.setStyleSheet("font: 12pt")
         self.song_title_label = QLabel("<b>Press Play button to start</b>")
-        self.song_title_label.setStyleSheet("font: 16pt")
-        layout.addWidget(self.song_title_label)
-        grid.addWidget(self.top_left_display(), 0, 0)
-        grid.addLayout(self.transport_buttons(), 1, 0)
-        grid.addLayout(self.song_info(), 0, 1)
-        grid.addLayout(self.left_buttons(), 1, 1)
+        self.song_title_label.setStyleSheet("font: 12pt")
+        grid.addWidget(self.duration_label, 0, 0)
+        grid.addWidget(self.song_title_label, 0, 1)
+        grid.addWidget(self.top_left_display(), 1, 0)
+        grid.addLayout(self.transport_buttons(), 2, 0)
+        grid.addLayout(self.song_info(), 1, 1)
+        grid.addLayout(self.left_buttons(), 2, 1)
         layout.addLayout(grid)
         layout.addLayout(self.song_duration_bar())
         return layout
@@ -73,14 +76,13 @@ class MusicApp(QWidget):
     def song_info(self) -> QLayout:
         layout = QVBoxLayout()
         grid = QGridLayout()
+        # layout.addWidget(self.song_title_label)
         self.bitrate_label = QLabel("<b>Bitrate:</b> --")
-        grid.addWidget(self.bitrate_label, 0, 0)
-        self.sampling_rate_label = QLabel("<b>Sampling rate:</b> --")
-        grid.addWidget(self.sampling_rate_label, 0, 1)
-        self.duration_label = QLabel("<b>Stopped</b> --:--/--:--")
-        grid.addWidget(self.duration_label, 1, 0)
+        grid.addWidget(self.bitrate_label, 1, 0)
+        self.sampling_rate_label = QLabel("<b>Mixrate:</b> --")
+        grid.addWidget(self.sampling_rate_label, 1, 1)
         self.channel_label = QLabel("<b>-- Channels</b>")
-        grid.addWidget(self.channel_label, 1, 1)
+        grid.addWidget(self.channel_label, 1, 2)
 
         volume_slider_layout = QHBoxLayout()
         volume_slider_layout.addWidget(QLabel("<b>Volume:</b>"))
@@ -90,7 +92,6 @@ class MusicApp(QWidget):
         volume_slider.setValue(100)
         volume_slider.valueChanged.connect(lambda val: self.playlist_ctl.set_volume(val / 100))
         volume_slider_layout.addWidget(volume_slider)
-        layout.addLayout(volume_slider_layout)
 
         self.playlist_status_label = QLabel("""
             <font color=\"black\"><b>Shuffle</b></font>
@@ -115,7 +116,7 @@ class MusicApp(QWidget):
             metadata = self.playlist_ctl.get_stream_info()
             self.song_title_label.setText(f"<b>{truncate(metadata['title'], 40)}</b>")
             self.bitrate_label.setText(f"<b>Bitrate:</b> {str(metadata['bitrate'] / 1000) + 'kbps'}")
-            self.sampling_rate_label.setText(f"<b>Sampling rate:</b> {str(metadata['rate'] / 1000) + 'kHz'}")
+            self.sampling_rate_label.setText(f"<b>Mixrate:</b> {str(metadata['rate'] / 1000) + 'kHz'}")
             self.duration_label.setText(
                 f"""
                 <b>{self.playlist_ctl.state.capitalize()}</b> 
@@ -134,7 +135,7 @@ class MusicApp(QWidget):
         self.song_duration_slider.setValue(0)
         self.song_title_label.setText("<b>Press Play button to start</b>")
         self.bitrate_label.setText("<b>Bitrate:</b> --")
-        self.sampling_rate_label.setText("<b>Sampling rate:</b> --")
+        self.sampling_rate_label.setText("<b>Mixrate:</b> --")
         self.duration_label.setText("<b>Stopped</b> --:--/--:--")
         self.channel_label.setText("<b>-- channel(s)</b>")
         self.new_album_cover()
@@ -175,5 +176,5 @@ class MusicApp(QWidget):
             if duration:
                 percent = int((pos / duration) * 1000)
                 self.song_duration_slider.setValue(percent)
-        else:
+        elif not self.playlist_ctl.state == "paused":
             self.song_duration_slider.setValue(0)

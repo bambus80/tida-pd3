@@ -14,7 +14,7 @@ class MusicApp(QWidget):
         self.timer.start()
 
         self.setWindowTitle("Super cool music player")
-        self.setGeometry(100, 100, 550, 200)
+        self.setGeometry(100, 100, 550, 400)
         self.old_idx = 0
         self.playlist_ctl: PlaylistController = playlist_ctl
         self.playlist_ctl.song_updated.connect(self.update_song_info)
@@ -38,7 +38,19 @@ class MusicApp(QWidget):
         grid.addLayout(self.left_buttons(), 2, 1)
         layout.addLayout(grid)
         layout.addLayout(self.song_duration_bar())
+        layout.addWidget(self.song_list_widget())
         return layout
+
+    def song_list_widget(self) -> QListWidget:
+        self.song_list = QListWidget(self)
+        self.refresh_song_list()
+        return self.song_list
+
+    def refresh_song_list(self) -> None:
+        self.song_list.clear()
+        for i in range(0, len(self.playlist_ctl.song_list) - 1):
+            item = QListWidgetItem(self.playlist_ctl.song_list[i])
+            self.song_list.addItem(item)
 
     def top_left_display(self) -> QLabel:
         self.album_label = QLabel()

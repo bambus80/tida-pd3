@@ -155,3 +155,8 @@ class PlaylistController(QObject):
         else:
             self.mode = "repeat"
             print("Enabled repeat")
+
+    def remove_song(self, idx: int) -> None:
+        self.song_list.pop(idx)
+        if self.idx == idx:
+            self.stop()
